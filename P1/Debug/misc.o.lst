@@ -1,0 +1,107 @@
+   1              	# 1 "../misc.asm"
+   1              	
+   0              	
+   0              	
+   0              	
+   2              		.equ COEF1, 3483
+   3              		.equ COEF2, 11718
+   4              		.equ COEF3, 1183
+   5              		//.equ COEFDIV, 16384
+   6              	
+   7              	.global rgb2gray
+   8              	.global div16384
+   9              	.global apply_gaussian
+  10              		.text
+  11              	/* Descomentar e implementar estas funciones*/
+  12              	
+  13              	//start:
+  14              	rgb2gray:
+  15 0000 F0432DE9 			PUSH {R4, R5, R6, R7, R8, R9,LR}
+  16 0004 B8109FE5 			LDR R1, =COEF1
+  17 0008 B8209FE5 			LDR R2, =COEF2
+  18 000c B8309FE5 			LDR R3, =COEF3
+  19              	
+  20              			//R
+  21 0010 0040D0E5 			LDRB R4, [R0] //Cargas el byte del pixel
+  22 0014 940105E0 			MUL R5, R4, R1 //Multiplicas por su coeficiente
+  23              	
+  24              			//G
+  25 0018 010080E2 			ADD R0, R0, #1 // Avanzas 1 byte
+  26 001c 0060D0E5 			LDRB R6, [R0] //Cargas el byte del pixel
+  27 0020 960207E0 			MUL R7, R6, R2 //Multiplicas por su coeficiente
+  28              	
+  29              			//B
+  30 0024 010080E2 			ADD R0, R0, #1 // Avanzas 1 byte
+  31 0028 0080D0E5 			LDRB R8, [R0] //Cargas el byte del pixel
+  32 002c 980309E0 			MUL R9, R8, R3 //Multiplicas por su coeficiente
+  33              	
+  34 0030 070085E0 			ADD R0, R5, R7 //Sumas los 3 pixeles
+  35 0034 090080E0 			ADD R0, R0, R9
+  36              	
+  37 0038 FEFFFFEB 			bl div16384
+  38 003c F043BDE8 			POP {R4, R5, R6, R7, R8, R9,LR}
+  39 0040 0EF0A0E1 			MOV PC, LR
+  40 0044 FEFFFFEA 			B .
+  41              	
+  42              	div16384: 
+  43 0048 04E02DE5 			PUSH {LR}
+  44 004c 2007A0E1 			LSR R0, #14 //lsr R0, #14
+  45 0050 04E09DE4 			POP {LR}
+  46 0054 0EF0A0E1 			MOV PC, LR
+  47              	
+  48              	apply_gaussian:
+  49 0058 F0412DE9 			PUSH {R4, R5, R6, R7, R8, LR}
+  50 005c 0040A0E3 			MOV R4, #0 //Inicializamos i
+  51 0060 030054E1 	For_i:  CMP R4, R3 //Comparamos i < height(r3)
+  52 0064 140000AA 			BGE FinFor_i
+  53 0068 0050A0E3 			MOV R5, #0 //Inicializamos j
+  54 006c 020055E1 	For_j:  CMP R5, R2 //Comparamos j < width(r2)
+  55 0070 0F0000AA 			BGE FinFor_j
+  56 0074 3F002DE9 			PUSH {R0, R1, R2, R3, R4, R5}//DUDA
+  57 0078 0180A0E1 			MOV R8, R1 //Aseguramos im2 en r8
+  58 007c 0210A0E1 			MOV R1, R2 //Pasamos widht a r1
+  59 0080 0320A0E1 			MOV R2, R3 //Pasamos height a r2
+  60 0084 0430A0E1 			MOV R3, R4 //Pasamos i a r3
+  61 0088 0540A0E1 			MOV R4, R5 //Pasamos j a r4
+  62              	
+  63 008c 04402DE5 			PUSH {R4}
+  64 0090 FEFFFFEB 			BL gaussian
+  65 0094 04409DE4 			POP {R4}
+  66              	
+  67 0098 0070A0E1 			MOV R7, R0 //Guardamos el resultado en r7
+  68 009c 3F00BDE8 			POP {R0, R1, R2, R3, R4, R5}//DUDA
+  69 00a0 940206E0 			MUL R6, R4, R2 //i * widht
+  70 00a4 056086E0 			ADD R6, R6, R5 //Resultado anterior + j
+  71 00a8 0670C8E7 			STRB R7, [R8, R6] //Guardamos en la posicion i*width +j de im2
+  72              	
+  73 00ac 015085E2 			ADD R5, R5, #1 //Incrementamos j++
+  74 00b0 EDFFFFEA 			b For_j
+  75              	
+  76              	FinFor_j:
+  77 00b4 014084E2 			ADD R4, R4, #1 //Incrementamos contador i++
+  78 00b8 E8FFFFEA 			B For_i
+  79 00bc F041BDE8 	FinFor_i: POP {R4, R5, R6, R7, R8, LR}
+  80 00c0 0EF0A0E1 			  MOV PC, LR
+  81              	
+  82              	
+  83              	
+  84 00c4 9B0D0000 	  		.end
+  84      C62D0000 
+  84      9F040000 
+DEFINED SYMBOLS
+         ../misc.asm:2      *ABS*:00000d9b COEF1
+         ../misc.asm:3      *ABS*:00002dc6 COEF2
+         ../misc.asm:4      *ABS*:0000049f COEF3
+         ../misc.asm:14     .text:00000000 rgb2gray
+         ../misc.asm:42     .text:00000048 div16384
+         ../misc.asm:48     .text:00000058 apply_gaussian
+         ../misc.asm:15     .text:00000000 $a
+         ../misc.asm:51     .text:00000060 For_i
+         ../misc.asm:79     .text:000000bc FinFor_i
+         ../misc.asm:54     .text:0000006c For_j
+         ../misc.asm:76     .text:000000b4 FinFor_j
+         ../misc.asm:84     .text:000000c4 $d
+                   .debug_aranges:0000000c $d
+
+UNDEFINED SYMBOLS
+gaussian
